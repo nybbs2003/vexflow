@@ -22,13 +22,13 @@ Vex.Flow.StaveConnector = (function() {
     BRACE: 3,
     BRACKET: 4,
     BOLD_DOUBLE_LEFT: 5,
-    BOLD_DOUBLE_RIGHT: 6
+    BOLD_DOUBLE_RIGHT: 6,
+    THIN_DOUBLE: 7
   };
-
-  var THICKNESS = Vex.Flow.STAVE_LINE_THICKNESS;
 
   StaveConnector.prototype = {
     init: function(top_stave, bottom_stave) {
+      this.thickness = Vex.Flow.STAVE_LINE_THICKNESS;
       this.width = 3;
       this.top_stave = top_stave;
       this.bottom_stave = bottom_stave;
@@ -43,9 +43,29 @@ Vex.Flow.StaveConnector = (function() {
 
     setType: function(type) {
       if (type >= StaveConnector.type.SINGLE_RIGHT &&
-          type <= StaveConnector.type.BOLD_DOUBLE_RIGHT)
+          type <= StaveConnector.type.THIN_DOUBLE)
         this.type = type;
       return this;
+    },
+
+    setText: function(text, text_options) {
+      this.text = text;
+      this.text_options = {
+        shift_x: 0,
+        shift_y: 0
+      };
+      Vex.Merge(this.text_options, text_options);
+
+      this.font = {
+        family: "times",
+        size: 16,
+        weight: "normal"
+      };
+      return this;
+    },
+
+    setFont: function(font) {
+      Vex.Merge(this.font, font);
     },
 
     setXShift: function(x_shift){
@@ -62,12 +82,15 @@ Vex.Flow.StaveConnector = (function() {
           "NoContext", "Can't draw without a context.");
       var topY = this.top_stave.getYForLine(0);
       var botY = this.bottom_stave.getYForLine(this.bottom_stave.getNumLines() - 1) +
-        THICKNESS;
+        this.thickness;
       var width = this.width;
       var topX = this.top_stave.getX();
 
-      var isRightSidedConnector = (this.type === StaveConnector.type.SINGLE_RIGHT ||
-        this.type === StaveConnector.type.BOLD_DOUBLE_RIGHT);
+      var isRightSidedConnector = (
+        this.type === StaveConnector.type.SINGLE_RIGHT ||
+        this.type === StaveConnector.type.BOLD_DOUBLE_RIGHT ||
+        this.type === StaveConnector.type.THIN_DOUBLE
+      );
 
       if (isRightSidedConnector){
         topX = this.top_stave.getX() + this.top_stave.width;
@@ -135,12 +158,35 @@ Vex.Flow.StaveConnector = (function() {
         case StaveConnector.type.BOLD_DOUBLE_RIGHT:
           drawBoldDoubleLine(this.ctx, this.type, topX, topY, botY);
           break;
+        case StaveConnector.type.THIN_DOUBLE:
+          width = 1;
+          break;
       }
 
       if (this.type !== StaveConnector.type.BRACE &&
         this.type !== StaveConnector.type.BOLD_DOUBLE_LEFT &&
         this.type !== StaveConnector.type.BOLD_DOUBLE_RIGHT) {
         this.ctx.fillRect(topX , topY, width, attachment_height);
+      }
+
+      // If the connector is a thin double barline, draw the paralell line
+      if (this.type === StaveConnector.type.THIN_DOUBLE) {
+        this.ctx.fillRect(topX - 3, topY, width, attachment_height);
+      }
+
+      // Add stave connector text
+      if (this.text !== undefined) {
+        this.ctx.save();
+        this.ctx.lineWidth = 2;
+        this.ctx.setFont(this.font.family, this.font.size, this.font.weight);
+        var text_width = this.ctx.measureText("" + this.text).width;
+
+        var x = this.top_stave.getX() - text_width - 24 + this.text_options.shift_x;
+        var y = (this.top_stave.getYForLine(0) + this.bottom_stave.getBottomLineY()) / 2 +
+          this.text_options.shift_y;
+
+        this.ctx.fillText("" + this.text, x, y + 4);
+        this.ctx.restore();
       }
     }
   };

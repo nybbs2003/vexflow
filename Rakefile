@@ -4,13 +4,14 @@
 require 'bundler/setup'
 require 'fileutils'
 require 'rake/testtask'
-require 'Time'
+require 'time'
 require 'erb'
 require 'uglifier'
 
 DIR = File.dirname(__FILE__)
 TARGET_DIR = "build/vexflow"
 TARGET = "#{TARGET_DIR}/vexflow-min.js"
+TARGET_RAW = "#{TARGET_DIR}/vexflow-debug.js"
 
 BUILD_VERSION = "1.2 Custom"
 BUILD_PREFIX = "0xFE"
@@ -18,6 +19,7 @@ BUILD_DATE = Time.now()
 BUILD_COMMIT = `git rev-list --max-count=1 HEAD`.chomp
 
 JSHINT = "./node_modules/jshint/bin/jshint"
+DOCCO = "./node_modules/.bin/docco"
 
 directory TARGET_DIR
 directory 'build/tests'
@@ -38,11 +40,14 @@ base_sources = [
   "src/tickcontext.js",
   "src/tickable.js",
   "src/note.js",
-  "src/ghostnote.js",
   "src/notehead.js",
   "src/stem.js",
+  "src/stemmablenote.js",
   "src/stavenote.js",
   "src/tabnote.js",
+  "src/ghostnote.js",
+  "src/clefnote.js",
+  "src/timesignote.js",
   "src/beam.js",
   "src/voice.js",
   "src/voicegroup.js",
@@ -67,12 +72,14 @@ base_sources = [
   "src/keymanager.js",
   "src/renderer.js",
   "src/raphaelcontext.js",
+  "src/canvascontext.js",
   "src/stavebarline.js",
   "src/stavehairpin.js",
   "src/stavevolta.js",
   "src/staverepetition.js",
   "src/stavesection.js",
   "src/stavetempo.js",
+  "src/stavetext.js",
   "src/barnote.js",
   "src/tremolo.js",
   "src/tuplet.js",
@@ -80,12 +87,20 @@ base_sources = [
   "src/textnote.js",
   "src/frethandfinger.js",
   "src/stringnumber.js",
-  "src/strokes.js"
+  "src/strokes.js",
+  "src/curve.js",
+  "src/staveline.js",
+  "src/crescendo.js",
+  "src/ornament.js",
+  "src/pedalmarking.js",
+  "src/textbracket.js",
+  "src/textdynamics.js"
 ]
 
 # Don't minify these files.
 reject = [
-  "src/header.js"
+  "src/header.js",
+  "src/container.js"
 ]
 
 # Catch other missing JS files
@@ -114,20 +129,27 @@ end
 file TARGET => vexflow_sources  do
   # Fill fields in header
   header = ERB.new(File.read("src/header.js")).result(binding)
-  File.open(TARGET, "w") do |f|
-    f.write header
+  raw_file = File.open(TARGET_RAW, "w")
+  min_file = File.open(TARGET, "w")
 
-    vexflow_sources.each do |file|
-      puts "Minifying: " + file
-      min = Uglifier.new(
-        {:output =>
-          {:comments => :none}
-        }).compile(File.read(file))
-      f.write(min)
-    end
+  raw_file.write header
+  min_file.write header
+
+  vexflow_sources.each do |file|
+    puts "Minifying: " + file
+    contents = File.read(file)
+    min = Uglifier.new(
+      {:output =>
+        {:comments => :none}
+      }).compile(contents)
+    raw_file.write(contents)
+    min_file.write(min)
   end
 
+  raw_file.close()
+  min_file.close()
   puts "Generated: " + TARGET
+  puts "Unminified: " + TARGET_RAW
 end
 
 copy_path("tests/*", "build/tests", :build_copy)
@@ -141,6 +163,12 @@ task :lint do
   # Requires JSHint to be installed
   puts "Checking VexFlow sources for lint errors..."
   system "#{JSHINT} --show-non-errors --config jshintrc src/*.js"
+end
+
+task :docs do
+  # Requires JSHint to be installed
+  puts "Generating documentation..."
+  system "#{DOCCO} -l linear src/*.js"
 end
 
 task :make => [:build_copy, TARGET_DIR, TARGET]

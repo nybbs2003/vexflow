@@ -57,6 +57,11 @@ Vex.Flow.RaphaelContext = (function() {
       return this;
     },
 
+    setRawFont: function(font) {
+      this.attributes.font = font;
+      return this;
+    },
+
     setFillStyle: function(style) {
       this.attributes.fill = style;
       return this;
@@ -88,6 +93,10 @@ Vex.Flow.RaphaelContext = (function() {
       this.lineWidth = width;
     },
 
+    // Empty because there is no equivalent in SVG
+    setLineDash: function() { return this; },
+    setLineCap: function() { return this; },
+
     scale: function(x, y) {
       this.state.scale = { x: x, y: y };
       this.attributes.scale = x + "," + y + ",0,0";
@@ -106,6 +115,14 @@ Vex.Flow.RaphaelContext = (function() {
       this.element.style.width = width;
       this.paper.setSize(width, height);
       return this;
+    },
+
+    // Sets the SVG `viewBox` property, which results in auto scaling images when its container
+    // is resized.
+    //
+    // Usage: `ctx.setViewBox("0 0 600 400")`
+    setViewBox: function(viewBox) {
+      this.paper.canvas.setAttribute('viewBox', viewBox);
     },
 
     rect: function(x, y, width, height) {
@@ -226,11 +243,6 @@ Vex.Flow.RaphaelContext = (function() {
     },
 
     arcHelper: function(x, y, radius, startAngle, endAngle, antiClockwise) {
-      Vex.Assert(endAngle > startAngle, "end angle " + endAngle +
-                 " less than or equal to start angle " + startAngle);
-      Vex.Assert(startAngle >= 0 && startAngle <= Math.PI * 2);
-      Vex.Assert(endAngle >= 0 && endAngle <= Math.PI * 2);
-
       var x1 = x + radius * Math.cos(startAngle);
       var y1 = y + radius * Math.sin(startAngle);
 
@@ -299,10 +311,12 @@ Vex.Flow.RaphaelContext = (function() {
         attr(this.attributes).
         attr("fill", "none").
         attr("stroke", "none");
+      var bounds = txt.getBBox();
+      txt.remove();
 
       return {
-        width: txt.getBBox().width,
-        height: txt.getBBox().height
+        width: bounds.width,
+        height: bounds.height
       };
     },
 

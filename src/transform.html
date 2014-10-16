@@ -69,7 +69,51 @@
         "v8c": true, "v8f": true, "v92": true, "v93": true, "v94": true,
         "v95": true, "v97": true, "v9a": true, "v9b": true, "v9c": true,
         "vaa": true, "va3": true, "va5": true, "va9": true, "vad": true, "vb6": true,
-        "vb3": true, "vb9": true, "vba": true, "vbf": true, "vc3": true };
+        "vb3": true, "vb9": true, "vba": true, "vbf": true, "vc3": true,
+
+        // Microtonal
+        "v9e": true, // db
+        "vab": true, // d
+        "v90": true, // bb/
+        "v51": true, // ++
+        "v78": true,  // +
+
+
+        // Pedal Open
+        "v36": true,
+        // Pedal close
+        "v5d": true,
+        // Caesura straight
+        "v34": true,
+        // Caesura curved
+        "v4b": true,
+        // Breath
+        "v6c": true,
+        // Tick
+        "v6f": true,
+        // Marcato
+        "v5a": true,
+        // Marcato Inverted
+        "v8a": true,
+
+        "v72": true, // Turn
+        "v33": true, // Turn inverted
+        "v45": true, // Mordent inverted
+        "v60": true, // upprall
+        "vb4": true, // downprall
+        "v6d": true, // prallup
+        "v2c": true, // pralldown
+        "v29": true, // upmordent
+        "v68": true, // downmordent
+        "v20": true, // lineprall
+        "v1e": true, // prall
+        "v86": true,  // prallprall
+
+        "v53": true, //breve
+        "v31": true, // breve rest
+
+        "vb1": true // dynamics letter r
+      };
 
       // Get number of glyphs and rename elements
       var counter = 0;
@@ -101,6 +145,7 @@
       ctx.font = "16pt Arial";
 
       for (var glyph in Vex.Flow.Font.glyphs) {
+        debugger;
         ctx.fillStyle = "#666";
         ctx.fillText(glyph, x, y);
         x += 60;
